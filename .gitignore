@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets
+.env
+
+# Environment Management
+.python-version
+uv.lock
+
+## Ignore specific test notebooks and results
+#test_*.ipynb
+#brandprobe_results_*.xlsx
+
+# General rule for all Excel results (recommended)
+*.xlsx
+
+# Ignore everything inside the outputs folder
+test/
+
+# IDE - Antigravity / Cursor / VS Code
+.antigravity/
+.vscode/
+.history/

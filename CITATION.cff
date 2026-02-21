@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software or the 3D Cube methodology, please cite it as follows."
+authors:
+- family-names: "Panagopoulos"
+  given-names: "Dimitrios"
+title: "BrandProbe: A Modular Framework for LLM Sentiment Auditing"
+version: 1.0.0
+date-released: 2026-02-21
+url: "https://github.com/dpanagop/brandprobe"
+repository-code: "https://github.com/dpanagop/brandprobe"
+# We list the primary software license here for machine readability
+license: MIT
+# We use the abstract to clarify the dual-licensing for humans and search engines
+abstract: >-
+  BrandProbe is a modular framework for auditing LLM sentiment. 
+  The codebase is licensed under MIT, while the 3D Cube methodology 
+  and persona library are licensed under CC-BY-4.0.
+keywords:
+  - "LLM Sentiment"
+  - "Brand Auditing"
+  - "3D Cube Methodology"
