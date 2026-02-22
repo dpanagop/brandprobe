@@ -77,10 +77,11 @@ from brandprobe.probers import PERSONAS, TEST_CASES
 generator = DynamicProberGenerator(prompter_engine)
 
 # Tell the LLM to invent 3 personas representing 'European Teenagers'
-new_personas = generator.generate_personas(count=3, context="European Teenagers")
+# Using temperature=0.9 for highly creative variation
+new_personas = generator.generate_personas(count=3, context="European Teenagers", temperature=0.9)
 
 # Tell the LLM to invent 4 test cases regarding 'Data Privacy'
-new_cases = generator.generate_test_cases(count=4, topic="Data Privacy")
+new_cases = generator.generate_test_cases(count=4, topic="Data Privacy", temperature=0.9)
 
 # Add the newly generated items to the global dictionaries in memory so the Runner uses them
 PERSONAS.update(new_personas)
@@ -121,7 +122,8 @@ target_personas = list(PERSONAS.keys())
 runner = Runner(engine=generation_engine, llm_scorer_engine=scoring_engine)
 
 # 4. Execute the framework
-df = runner.run_cube(targets, methodologies, target_test_cases, target_personas)
+# Pass a temperature override here (e.g. 0.3 for consistency)
+df = runner.run_cube(targets, methodologies, target_test_cases, target_personas, temperature=0.3)
 
 # 5. Export and Analyze
 df.to_csv("apple_google_sentiment_audit.csv", index=False)

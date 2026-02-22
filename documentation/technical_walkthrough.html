@@ -32,7 +32,7 @@
         <p>This module manages the inputs sent to the LLM.</p>
         <ul>
             <li><strong>Static Dictionaries</strong>: Contains predefined <code>PERSONAS</code> (system prompts) and <code>TEST_CASES</code> (user prompts with a <code>{brand}</code> injection placeholder).</li>
-            <li><strong><code>DynamicProberGenerator</code></strong>: A utility class that accepts a <code>BaseEngine</code> to dynamically ask an LLM to generate new, JSON-formatted personas and test cases. It includes static methods (<code>save_to_json</code>, <code>load_from_json</code>) for disk persistence.</li>
+            <li><strong><code>DynamicProberGenerator</code></strong>: A utility class that accepts a <code>BaseEngine</code> to dynamically ask an LLM to generate new, JSON-formatted personas and test cases. The generation methods (<code>generate_personas</code>, <code>generate_test_cases</code>) now accept an optional <code>temperature</code> floating-point value to control the creativity of generated items. It includes static methods (<code>save_to_json</code>, <code>load_from_json</code>) for disk persistence.</li>
         </ul>
 
         <h3>1.3 <code>scorers.py</code> (The Evaluation Layer)</h3>
@@ -46,7 +46,7 @@
         <p>The <code>Runner</code> orchestrates the execution of the 3D Cube.</p>
         <ul>
             <li><strong><code>__init__(engine, llm_scorer_engine=None)</code></strong>: Takes the primary generation engine and an optional secondary engine for scoring.</li>
-            <li><strong><code>run_cube(...)</code></strong>: Executes a nested loop across Targets, Methodologies, Test Cases, and Personas. For each combination:
+            <li><strong><code>run_cube(...)</code></strong>: Executes a nested loop across Targets, Methodologies, Test Cases, and Personas. You can pass an optional <code>temperature</code> (default <code>0.7</code>) to control generation determinism across the main audit run. For each combination:
                 <ol>
                     <li>It formats the system and user prompts (<code>_apply_methodology</code>).</li>
                     <li>Calls <code>self.engine.generate()</code> statelessly (no conversation history).</li>

@@ -22,7 +22,7 @@ class DynamicProberGenerator:
     def __init__(self, engine: BaseEngine):
         self.engine = engine
 
-    def generate_personas(self, count: int, context: str = "general consumers") -> Dict[str, str]:
+    def generate_personas(self, count: int, context: str = "general consumers", temperature: float = 0.7) -> Dict[str, str]:
         """Generates a dictionary of Persona Name: Persona Prompt."""
         system_prompt = (
             "You are an expert market research persona designer. "
@@ -31,14 +31,14 @@ class DynamicProberGenerator:
             "and values are their detailed behavioral system prompts (starting with 'You are a ...'). "
             "Do not include any Markdown formatting or comments in your response."
         )
-        response = self.engine.generate(system_prompt, "Generate the personas.", max_tokens=1000)
+        response = self.engine.generate(system_prompt, "Generate the personas.", max_tokens=1000, temperature=temperature)
         try:
             return json.loads(response)
         except json.JSONDecodeError:
             print(f"Failed to parse LLM persona generation. Response was: {response}")
             return {}
 
-    def generate_test_cases(self, count: int, topic: str = "general brand perception") -> Dict[str, str]:
+    def generate_test_cases(self, count: int, topic: str = "general brand perception", temperature: float = 0.7) -> Dict[str, str]:
         """Generates a dictionary of Test Case Name: Test Case Format String (must contain {brand})."""
         system_prompt = (
             "You are an expert market research questionnaire designer. "
@@ -48,7 +48,7 @@ class DynamicProberGenerator:
             "and values are the question strings containing '{brand}'. "
             "Do not include any Markdown formatting or comments in your response."
         )
-        response = self.engine.generate(system_prompt, "Generate the test cases.", max_tokens=1000)
+        response = self.engine.generate(system_prompt, "Generate the test cases.", max_tokens=1000, temperature=temperature)
         try:
             return json.loads(response)
         except json.JSONDecodeError:

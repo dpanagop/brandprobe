@@ -19,7 +19,7 @@ class Runner:
             return f"{base_persona} Respond by telling a short personal story or narrative."
         return base_persona
 
-    def run_cube(self, targets: List[str], methodologies: List[str], test_cases: List[str], personas: List[str]) -> pd.DataFrame:
+    def run_cube(self, targets: List[str], methodologies: List[str], test_cases: List[str], personas: List[str], temperature: float = 0.7) -> pd.DataFrame:
         """
         Executes the stateless 3D Cube evaluation for target x methodology x test case x persona.
         Returns a Pandas DataFrame with the results.
@@ -38,7 +38,7 @@ class Runner:
                         user_prompt = TEST_CASES[test_case].format(brand=target)
                         
                         # Stateless engine call
-                        response = self.engine.generate(system_prompt, user_prompt)
+                        response = self.engine.generate(system_prompt, user_prompt, temperature=temperature)
                         
                         # Scorer processing
                         sentiment = SentimentWrapper.analyze(response, engine=self.llm_scorer_engine)

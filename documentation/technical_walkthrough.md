@@ -14,7 +14,7 @@ This module defines how BrandProbe communicates with AI models.
 ### 1.2 `probers.py` (The Templating & Generation Layer)
 This module manages the inputs sent to the LLM.
 - **Static Dictionaries**: Contains predefined `PERSONAS` (system prompts) and `TEST_CASES` (user prompts with a `{brand}` injection placeholder).
-- **`DynamicProberGenerator`**: A utility class that accepts a `BaseEngine` to dynamically ask an LLM to generate new, JSON-formatted personas and test cases. It includes static methods (`save_to_json`, `load_from_json`) for disk persistence.
+- **`DynamicProberGenerator`**: A utility class that accepts a `BaseEngine` to dynamically ask an LLM to generate new, JSON-formatted personas and test cases. The generation methods (`generate_personas`, `generate_test_cases`) now accept an optional `temperature` floating-point value to control the creativity of generated items. It includes static methods (`save_to_json`, `load_from_json`) for disk persistence.
 
 ### 1.3 `scorers.py` (The Evaluation Layer)
 This module processes the LLM's raw text response.
@@ -24,7 +24,7 @@ This module processes the LLM's raw text response.
 ### 1.4 `runner.py` (The Orchestrator)
 The `Runner` orchestrates the execution of the 3D Cube.
 - **`__init__(engine, llm_scorer_engine=None)`**: Takes the primary generation engine and an optional secondary engine for scoring.
-- **`run_cube(...)`**: Executes a nested loop across Targets, Methodologies, Test Cases, and Personas. For each combination:
+- **`run_cube(...)`**: Executes a nested loop across Targets, Methodologies, Test Cases, and Personas. You can pass an optional `temperature` (default `0.7`) to control generation determinism across the main audit run. For each combination:
   1. It formats the system and user prompts (`_apply_methodology`).
   2. Calls `self.engine.generate()` statelessly (no conversation history).
   3. Passes the result to `SentimentWrapper` and `ReliabilityLayer`.
