@@ -30,6 +30,18 @@ The `Runner` orchestrates the execution of the 3D Cube.
   3. Passes the result to `SentimentWrapper` and `ReliabilityLayer`.
   4. Appends the metrics into a list and returns a structural `pandas.DataFrame`.
 
+### 1.5 `analytics.py` (The Semantic Auditing Layer)
+This module introduces automated semantic analysis using local embeddings.
+- **`get_consistency_metrics(df, group_cols)`**: Utilizes `SentenceTransformer` locally (`all-MiniLM-L6-v2`) to generate embeddings for valid results in the DataFrame. It calculates pairwise Cosine Similarity among grouped responses to identify semantic consistency. Higher values mean the LLM is responding similarly across attempts.
+- **`calculate_sentiment_skew(df, target_col='Sentiment', group_cols=None)`**: Uses `scipy.stats.skew` on grouped DataFrame columns to calculate the multi-dimensional Fisher-Pearson skewness of sentiment scores. It assigns text labels to let you know if a model cut leans overly positive or overly negative.
+
+### 1.6 `visualizations.py` (The Charting Layer)
+This module provides dynamic charting for presentation and qualitative review.
+- **`plot_radar(df, target_names, axis_col, score='Sentiment', ...)`**: Generates a dynamic radar chart using `matplotlib` polar projection, smoothly comparing selected Targets across dynamic categorical axes (e.g., Personas or Methodologies). Optimized for sentiment ranges from -1 to 1 (visualized from -1.1 to 1.1).
+- **`plot_semantic_map(df, target_filter, color_by, ...)`**: Generates a 2D map. It generates local `all-MiniLM-L6-v2` embeddings, squashes them down to 2 dimensions using `umap-learn`, and plots a scatter graph with `seaborn` colored by a desired parameter.
+- **`plot_skew_comparison(skew_df, x_col, hue_col, ...)`**: Generates a Bar Chart displaying the calculated Skewness for different groupings (e.g., comparing Targets side-by-side grouped by Persona) complete with analytical threshold lines at 0.5 and -0.5.
+
+
 ## 2. Understanding `verify_cube.py`
 
 The `verify_cube.py` script serves as an integration test to ensure the mathematical Cartesian product logic works without spending real API credits.

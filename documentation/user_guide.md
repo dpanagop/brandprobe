@@ -134,3 +134,56 @@ print(df.head())
 - **Methodologies**: "Direct" answers plainly. "Adversarial" asks the persona to assume the worst. "Implicit" asks the persona to respond creatively via a narrative.
 - **Statelessness**: Every row generated during `run_cube` is strictly stateless. No conversational context is retained between prompts.
 - **Data Analysis**: Because the output is a standard pandas DataFrame (`df`), you can use standard Jupyter Notebook workflows (matplotlib, seaborn, groupby) to map sentiment heatmaps by Persona vs Target immediately after generation. 
+
+---
+
+## 5. Advanced Analytics & Visualizations
+
+BrandProbe is equipped with modules to process the results of your audit into advanced metrics and charts.
+
+### 5.1 Semantic Consistency & Sentiment Skew
+You can measure how consistently the model answers, and determine if its sentiment is biased towards being overly positive across different dimensions (Target, Persona, Methodology). By grouping the data, you can see if the model's "mood" shifts.
+
+```python
+from brandprobe.analytics import get_consistency_metrics, calculate_sentiment_skew
+
+# Measure Semantic Consistency (requires sentence-transformers)
+consistency_df = get_consistency_metrics(df, group_cols=['Target', 'Persona'])
+print(consistency_df.head())
+
+# Measure Sentiment Bias (Skew) sliced by multiple dimensions
+skew_df = calculate_sentiment_skew(df, group_cols=['Target', 'Persona'])
+print(skew_df.head())
+```
+
+### 5.2 Dynamic Radar Charts, UMAP & Skew Plotting
+BrandProbe includes built-in functions to visualize complex LLM behavior, including dynamic radar charts, 2D semantic maps, and dimensional skewness grouping.
+
+```python
+from brandprobe.visualizations import plot_radar, plot_semantic_map, plot_skew_comparison
+
+# 1. Compare 'Target' performance across different 'Methodology' types
+plot_radar(
+    df=df,
+    target_names=['Apple', 'Google'],
+    axis_col='Methodology',
+    score='Sentiment',
+    save_path='radar_comparison.png' # Leave empty to display inline
+)
+
+# 2. Map the actual semantic space of 'Apple' responses, colored by 'Persona'
+plot_semantic_map(
+    df=df,
+    target_filter='Apple',
+    color_by='Persona',
+    save_path='umap_semantic.png'
+)
+
+# 3. Plot the Skew Analysis groupings to see how targets compare
+plot_skew_comparison(
+    skew_df=skew_df,
+    x_col='Target',
+    hue_col='Persona',
+    save_path='skew_comparison.png'
+)
+```

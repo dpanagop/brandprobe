@@ -1,21 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BrandProbe: Technical Walkthrough</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 2rem; color: #333; }
-        h1, h2, h3 { color: #2c3e50; }
-        code { background-color: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.9em; }
-        pre { background-color: #f4f4f4; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-        pre code { background-color: transparent; padding: 0; }
-        .section { margin-bottom: 2rem; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        code {
+            background-color: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
     </style>
 </head>
+
 <body>
     <h1>BrandProbe: Technical Walkthrough</h1>
-    <p>BrandProbe is a modular framework designed for auditing LLM sentiment across multiple dimensions (Targets, Methodologies, Test Cases, and Personas) using a "3D Cube" approach. This document provides a technical walkthrough of the codebase.</p>
+    <p>BrandProbe is a modular framework designed for auditing LLM sentiment across multiple dimensions (Targets,
+        Methodologies, Test Cases, and Personas) using a "3D Cube" approach. This document provides a technical
+        walkthrough of the codebase.</p>
 
     <div class="section">
         <h2>1. Architectural Overview</h2>
@@ -24,29 +60,51 @@
         <h3>1.1 <code>engines.py</code> (The Communication Layer)</h3>
         <p>This module defines how BrandProbe communicates with AI models.</p>
         <ul>
-            <li><strong><code>BaseEngine</code></strong>: An abstract base class requiring a <code>generate(system_prompt, user_prompt, max_tokens, temperature)</code> method. This enforces a standard interface.</li>
-            <li><strong><code>AzureOpenAIEngine</code> / <code>OpenAIEngine</code></strong>: Concrete implementations that wrap specific SDKs (e.g., the official <code>openai</code> Python package). They handle authentication, endpoint routing, and parsing the API responses back into standard strings.</li>
+            <li><strong><code>BaseEngine</code></strong>: An abstract base class requiring a
+                <code>generate(system_prompt, user_prompt, max_tokens, temperature)</code> method. This enforces a
+                standard interface.
+            </li>
+            <li><strong><code>AzureOpenAIEngine</code> / <code>OpenAIEngine</code></strong>: Concrete implementations
+                that wrap specific SDKs (e.g., the official <code>openai</code> Python package). They handle
+                authentication, endpoint routing, and parsing the API responses back into standard strings.</li>
         </ul>
 
         <h3>1.2 <code>probers.py</code> (The Templating & Generation Layer)</h3>
         <p>This module manages the inputs sent to the LLM.</p>
         <ul>
-            <li><strong>Static Dictionaries</strong>: Contains predefined <code>PERSONAS</code> (system prompts) and <code>TEST_CASES</code> (user prompts with a <code>{brand}</code> injection placeholder).</li>
-            <li><strong><code>DynamicProberGenerator</code></strong>: A utility class that accepts a <code>BaseEngine</code> to dynamically ask an LLM to generate new, JSON-formatted personas and test cases. The generation methods (<code>generate_personas</code>, <code>generate_test_cases</code>) now accept an optional <code>temperature</code> floating-point value to control the creativity of generated items. It includes static methods (<code>save_to_json</code>, <code>load_from_json</code>) for disk persistence.</li>
+            <li><strong>Static Dictionaries</strong>: Contains predefined <code>PERSONAS</code> (system prompts) and
+                <code>TEST_CASES</code> (user prompts with a <code>{brand}</code> injection placeholder).
+            </li>
+            <li><strong><code>DynamicProberGenerator</code></strong>: A utility class that accepts a
+                <code>BaseEngine</code> to dynamically ask an LLM to generate new, JSON-formatted personas and test
+                cases. The generation methods (<code>generate_personas</code>, <code>generate_test_cases</code>) now
+                accept an optional <code>temperature</code> floating-point value to control the creativity of generated
+                items. It includes static methods (<code>save_to_json</code>, <code>load_from_json</code>) for disk
+                persistence.
+            </li>
         </ul>
 
         <h3>1.3 <code>scorers.py</code> (The Evaluation Layer)</h3>
         <p>This module processes the LLM's raw text response.</p>
         <ul>
-            <li><strong><code>SentimentWrapper</code></strong>: Contains an <code>analyze(text, engine=None)</code> method. If no engine is provided, it defaults to a deterministic NLP approach using <code>TextBlob</code>. If an engine is provided, it uses the LLM as a "judge" to extract a sentiment score between -1.0 and 1.0.</li>
-            <li><strong><code>ReliabilityLayer</code></strong>: Provides basic heuristics (like <code>check_consistency</code>) to ensure the response isn't empty or malformed before scoring.</li>
+            <li><strong><code>SentimentWrapper</code></strong>: Contains an <code>analyze(text, engine=None)</code>
+                method. If no engine is provided, it defaults to a deterministic NLP approach using
+                <code>TextBlob</code>. If an engine is provided, it uses the LLM as a "judge" to extract a sentiment
+                score between -1.0 and 1.0.
+            </li>
+            <li><strong><code>ReliabilityLayer</code></strong>: Provides basic heuristics (like
+                <code>check_consistency</code>) to ensure the response isn't empty or malformed before scoring.
+            </li>
         </ul>
 
         <h3>1.4 <code>runner.py</code> (The Orchestrator)</h3>
         <p>The <code>Runner</code> orchestrates the execution of the 3D Cube.</p>
         <ul>
-            <li><strong><code>__init__(engine, llm_scorer_engine=None)</code></strong>: Takes the primary generation engine and an optional secondary engine for scoring.</li>
-            <li><strong><code>run_cube(...)</code></strong>: Executes a nested loop across Targets, Methodologies, Test Cases, and Personas. You can pass an optional <code>temperature</code> (default <code>0.7</code>) to control generation determinism across the main audit run. For each combination:
+            <li><strong><code>__init__(engine, llm_scorer_engine=None)</code></strong>: Takes the primary generation
+                engine and an optional secondary engine for scoring.</li>
+            <li><strong><code>run_cube(...)</code></strong>: Executes a nested loop across Targets, Methodologies, Test
+                Cases, and Personas. You can pass an optional <code>temperature</code> (default <code>0.7</code>) to
+                control generation determinism across the main audit run. For each combination:
                 <ol>
                     <li>It formats the system and user prompts (<code>_apply_methodology</code>).</li>
                     <li>Calls <code>self.engine.generate()</code> statelessly (no conversation history).</li>
@@ -55,29 +113,78 @@
                 </ol>
             </li>
         </ul>
+
+        <h3>1.5 <code>analytics.py</code> (The Semantic Auditing Layer)</h3>
+        <p>This module introduces automated semantic analysis using local embeddings.</p>
+        <ul>
+            <li><strong><code>get_consistency_metrics(df, group_cols)</code></strong>: Utilizes
+                <code>SentenceTransformer</code> locally (<code>all-MiniLM-L6-v2</code>) to generate embeddings for
+                valid results in the DataFrame. It calculates pairwise Cosine Similarity among grouped responses to
+                identify semantic consistency. Higher values mean the LLM is responding similarly across attempts.
+            </li>
+            <li><strong><code>calculate_sentiment_skew(df, target_col='Sentiment', group_cols=None)</code></strong>:
+                Uses
+                <code>scipy.stats.skew</code> on grouped DataFrame columns to calculate the multi-dimensional
+                Fisher-Pearson skewness of sentiment scores. It assigns text labels to let you know if a model cut leans
+                overly positive or overly negative.
+            </li>
+        </ul>
+
+        <h3>1.6 <code>visualizations.py</code> (The Charting Layer)</h3>
+        <p>This module provides dynamic charting for presentation and qualitative review.</p>
+        <ul>
+            <li><strong><code>plot_radar(df, target_names, axis_col, score='Sentiment', ...)</code></strong>: Generates
+                a dynamic radar
+                chart using <code>matplotlib</code> polar projection, smoothly comparing selected Targets across dynamic
+                categorical axes (e.g., Personas or Methodologies). Optimized for sentiment ranges from -1 to 1
+                (visualized from -1.1 to 1.1).</li>
+            <li><strong><code>plot_semantic_map(df, target_filter, color_by, ...)</code></strong>: Generates a 2D map.
+                It generates local <code>all-MiniLM-L6-v2</code> embeddings, squashes them down to 2 dimensions using
+                <code>umap-learn</code>, and plots a scatter graph with <code>seaborn</code> colored by a desired
+                parameter.
+            </li>
+            <li><strong><code>plot_skew_comparison(skew_df, x_col, hue_col, ...)</code></strong>: Generates a Bar Chart
+                displaying the calculated Skewness for different groupings (e.g., comparing Targets side-by-side grouped
+                by Persona) complete with analytical threshold lines at 0.5 and -0.5.</li>
+        </ul>
     </div>
 
     <div class="section">
         <h2>2. Understanding <code>verify_cube.py</code></h2>
-        <p>The <code>verify_cube.py</code> script serves as an integration test to ensure the mathematical Cartesian product logic works without spending real API credits.</p>
+        <p>The <code>verify_cube.py</code> script serves as an integration test to ensure the mathematical Cartesian
+            product logic works without spending real API credits.</p>
         <p><strong>How it works:</strong></p>
         <ol>
-            <li><strong>Mock Engines</strong>: It defines a <code>MockEngine</code> (for generation), a <code>MockScorerEngine</code> (for scoring), and a <code>MockProberEngine</code> (for generating dynamic personas/cases). These classes inherit from <code>BaseEngine</code> but return hardcoded strings instead of making network calls.</li>
-            <li><strong>Dynamic Generation Test</strong>: It uses the <code>MockProberEngine</code> to "generate" 2 new personas and 2 new test cases, demonstrating how to merge dynamic items into the static <code>TEST_CASES</code> and <code>PERSONAS</code> dictionaries.</li>
-            <li><strong>Execution</strong>: It initializes the <code>Runner</code> with the mock engines and runs the cube.</li>
-            <li><strong>Verification</strong>: It calculates the expected rows: <code>Len(Targets) * Len(Methodologies) * Len(Test Cases) * Len(Personas)</code>. It asserts that the resulting DataFrame length matches this exact number (ensuring no combinations were skipped).</li>
-            <li><strong>Export</strong>: It saves the results to <code>cube_results.csv</code> to prove the DataFrame structural integrity.</li>
+            <li><strong>Mock Engines</strong>: It defines a <code>MockEngine</code> (for generation), a
+                <code>MockScorerEngine</code> (for scoring), and a <code>MockProberEngine</code> (for generating dynamic
+                personas/cases). These classes inherit from <code>BaseEngine</code> but return hardcoded strings instead
+                of making network calls.
+            </li>
+            <li><strong>Dynamic Generation Test</strong>: It uses the <code>MockProberEngine</code> to "generate" 2 new
+                personas and 2 new test cases, demonstrating how to merge dynamic items into the static
+                <code>TEST_CASES</code> and <code>PERSONAS</code> dictionaries.
+            </li>
+            <li><strong>Execution</strong>: It initializes the <code>Runner</code> with the mock engines and runs the
+                cube.</li>
+            <li><strong>Verification</strong>: It calculates the expected rows:
+                <code>Len(Targets) * Len(Methodologies) * Len(Test Cases) * Len(Personas)</code>. It asserts that the
+                resulting DataFrame length matches this exact number (ensuring no combinations were skipped).
+            </li>
+            <li><strong>Export</strong>: It saves the results to <code>cube_results.csv</code> to prove the DataFrame
+                structural integrity.</li>
         </ol>
     </div>
 
     <div class="section">
         <h2>3. Extending BrandProbe: Adding New LLM Connections</h2>
-        <p>Because of the <code>BaseEngine</code> abstraction, adding support for a new LLM provider (like Anthropic, Google Gemini, or a custom local server) is trivial.</p>
+        <p>Because of the <code>BaseEngine</code> abstraction, adding support for a new LLM provider (like Anthropic,
+            Google Gemini, or a custom local server) is trivial.</p>
 
         <h3>Example: Connecting to a Custom URL API</h3>
-        <p>If you have an LLM hosted on a custom internal URL that accepts JSON POST requests, you just create a new class in <code>engines.py</code> (or directly in your notebook):</p>
+        <p>If you have an LLM hosted on a custom internal URL that accepts JSON POST requests, you just create a new
+            class in <code>engines.py</code> (or directly in your notebook):</p>
 
-<pre><code class="language-python">import requests
+        <pre><code class="language-python">import requests
 from brandprobe import BaseEngine
 
 class CustomRESTEngine(BaseEngine):
@@ -106,4 +213,5 @@ class CustomRESTEngine(BaseEngine):
         <p><code>runner = Runner(engine=CustomRESTEngine(url, key))</code></p>
     </div>
 </body>
+
 </html>
