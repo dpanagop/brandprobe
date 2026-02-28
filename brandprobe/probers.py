@@ -33,6 +33,9 @@ class DynamicProberGenerator:
         )
         response = self.engine.generate(system_prompt, "Generate the personas.", max_tokens=1000, temperature=temperature)
         try:
+            # some models return ```json\n{...}\n``` - we need to strip the markdown if present
+            if response.startswith("```json"):
+                response = response.strip("```json").strip("```").strip()
             return json.loads(response)
         except json.JSONDecodeError:
             print(f"Failed to parse LLM persona generation. Response was: {response}")
@@ -50,6 +53,9 @@ class DynamicProberGenerator:
         )
         response = self.engine.generate(system_prompt, "Generate the test cases.", max_tokens=1000, temperature=temperature)
         try:
+            # some models return ```json\n{...}\n``` - we need to strip the markdown if present
+            if response.startswith("```json"):
+                response = response.strip("```json").strip("```").strip()
             return json.loads(response)
         except json.JSONDecodeError:
             print(f"Failed to parse LLM test case generation. Response was: {response}")
