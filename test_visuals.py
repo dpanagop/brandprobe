@@ -31,7 +31,7 @@ def generate_synthetic_data() -> pd.DataFrame:
                         'Persona': p,
                         'Methodology': m,
                         'Test Case': tc,
-                        'Score': score,
+                        'Sentiment': score,
                         'Response': response
                     })
                     

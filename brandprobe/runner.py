@@ -5,9 +5,10 @@ from .probers import PERSONAS, TEST_CASES
 from .scorers import SentimentWrapper, ReliabilityLayer
 
 class Runner:
-    def __init__(self, engine: BaseEngine, llm_scorer_engine: Optional[BaseEngine] = None):
+    def __init__(self, engine: BaseEngine, llm_scorer_engine: Optional[BaseEngine] = None, sentiment_method: str = "textblob"):
         self.engine = engine
         self.llm_scorer_engine = llm_scorer_engine
+        self.sentiment_method = sentiment_method
 
     def _apply_methodology(self, base_persona: str, methodology: str) -> str:
         """Modifies the base persona based on the methodology."""
@@ -41,7 +42,11 @@ class Runner:
                         response = self.engine.generate(system_prompt, user_prompt, temperature=temperature)
                         
                         # Scorer processing
-                        sentiment = SentimentWrapper.analyze(response, engine=self.llm_scorer_engine)
+                        sentiment = SentimentWrapper.analyze(
+                            response, 
+                            engine=self.llm_scorer_engine, 
+                            method=self.sentiment_method
+                        )
                         is_consistent = ReliabilityLayer.check_consistency(response)
                         
                         results.append({

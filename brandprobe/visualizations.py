@@ -5,18 +5,27 @@ import seaborn as sns
 import umap
 from sentence_transformers import SentenceTransformer
 
+_ST_MODEL = None
+
+def _get_st_model():
+    """Lazily initializes and returns the SentenceTransformer model."""
+    global _ST_MODEL
+    if _ST_MODEL is None:
+        _ST_MODEL = SentenceTransformer('all-MiniLM-L6-v2')
+    return _ST_MODEL
+
 
 def plot_radar(df: pd.DataFrame, target_names: list[str], axis_col: str, 
-               score: str = 'Sentiment', save_path: str | None = None) -> None:
+               score: str = 'Sentiment', target_variable: str = 'Target', save_path: str | None = None) -> None:
     """
     Creates a dynamic radar chart comparing different targets across N categories.
     Optimized for sentiment scores ranging from -1 to 1.
     """
     # 1. Filter and group the data
-    plot_df = df[df['Target'].isin(target_names)]
+    plot_df = df[df[target_variable].isin(target_names)]
     
     # Calculate mean score for each target per axis category
-    grouped = plot_df.groupby(['Target', axis_col])[score].mean().unstack()
+    grouped = plot_df.groupby([target_variable, axis_col])[score].mean().unstack()
     
     if grouped.empty:
         print(f"No data available for targets {target_names} and axis '{axis_col}'.")
@@ -66,7 +75,7 @@ def plot_radar(df: pd.DataFrame, target_names: list[str], axis_col: str,
             line, = ax.plot(angles, values, linewidth=2, linestyle='solid', label=target)
             ax.fill(angles, values, alpha=0.15)
             
-    plt.title(f'Comparison of Targets across {axis_col}\n(Sentiment Scale: -1 to 1)', size=14, pad=30)
+    plt.title(f'Comparison of {target_variable} across {axis_col}\n({score} Scale: -1 to 1)', size=14, pad=30)
     plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1))
     
     # 6. Save or Show
@@ -77,7 +86,7 @@ def plot_radar(df: pd.DataFrame, target_names: list[str], axis_col: str,
         plt.show()
 
 
-def plot_semantic_map(df: pd.DataFrame, target_filter: str, color_by: str, save_path: str | None = None) -> None:
+def plot_semantic_map(df: pd.DataFrame, target_filter: str, color_by: str, target_variable: str = 'Target', save_path: str | None = None) -> None:
     """
     Creates a 2D UMAP semantic map of generated responses, colored by a specific attribute.
     
@@ -85,10 +94,11 @@ def plot_semantic_map(df: pd.DataFrame, target_filter: str, color_by: str, save_
         df: The DataFrame containing audit results with a 'Response' column.
         target_filter: The 'Target' value to filter by (e.g., 'OpenAI').
         color_by: The column used to color the scattered points (e.g., 'Persona', 'Methodology').
+        target_variable: The target column to filter on (default 'Target').
         save_path: Optional path to save the generated plot. If None, plt.show() is called.
     """
     # Filter the dataframe
-    plot_df = df[df['Target'] == target_filter].copy()
+    plot_df = df[df[target_variable] == target_filter].copy()
     
     if plot_df.empty:
         print(f"No data found for Target: '{target_filter}'.")
@@ -107,7 +117,7 @@ def plot_semantic_map(df: pd.DataFrame, target_filter: str, color_by: str, save_
     responses = plot_df['Response'].tolist()
     
     # Load model and generate embeddings
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    model = _get_st_model()
     embeddings = model.encode(responses)
     
     # Reduce dimensionality using UMAP

@@ -1,21 +1,33 @@
 from textblob import TextBlob
 from typing import Optional
+from transformers import pipeline
 from .engines import BaseEngine
 import re
 
+_ROBERTA_PIPELINE = None
+
+def _get_roberta_pipeline():
+    """Lazily initializes and returns the RoBERTa sentiment pipeline."""
+    global _ROBERTA_PIPELINE
+    if _ROBERTA_PIPELINE is None:
+        _ROBERTA_PIPELINE = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment-latest")
+    return _ROBERTA_PIPELINE
+
 class SentimentWrapper:
     @staticmethod
-    def analyze(text: str, engine: Optional[BaseEngine] = None) -> float:
+    def analyze(text: str, engine: Optional[BaseEngine] = None, method: str = "textblob") -> float:
         """
         Returns polarity score of the text ranging from -1.0 to 1.0.
-        If `engine` is provided, uses the LLM to score the sentiment.
-        Otherwise, defaults to TextBlob.
+        If `engine` is provided (and method is 'llm'), uses the LLM to score the sentiment.
+        Otherwise, uses the specified `method` ('textblob' or 'roberta').
         """
         if not text:
             return 0.0
             
-        if engine:
+        if method == "llm" and engine is not None:
             return SentimentWrapper._analyze_llm(text, engine)
+        elif method == "roberta":
+            return SentimentWrapper._analyze_roberta(text)
         else:
             return SentimentWrapper._analyze_textblob(text)
             
@@ -23,6 +35,23 @@ class SentimentWrapper:
     def _analyze_textblob(text: str) -> float:
         blob = TextBlob(text)
         return blob.sentiment.polarity
+        
+    @staticmethod
+    def _analyze_roberta(text: str) -> float:
+        pipe = _get_roberta_pipeline()
+        # Truncate to avoid exceeding max length
+        result = pipe(text[:512])[0]
+        label = result['label'].lower()
+        score = result['score']
+        
+        # typically labels are 'positive', 'neutral', 'negative'
+        # cardiffnlp/twitter-roberta-base-sentiment outputs 'positive', 'neutral', 'negative'
+        if label == 'positive':
+            return float(score)  # 0.0 to 1.0
+        elif label == 'negative':
+            return float(-score) # -1.0 to 0.0
+        else:
+            return 0.0           # neutral
         
     @staticmethod
     def _analyze_llm(text: str, engine: BaseEngine) -> float:

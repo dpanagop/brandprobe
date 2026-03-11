@@ -1,4 +1,5 @@
 {
-    "Quality Perception": "How satisfied are you with {brand}'s overall performance in addressing social welfare issues?",
-    "Brand Loyalty": "To what extent do you trust {brand} to prioritize its social responsibility initiatives?"
+    "Quality Perception": "How does the {brand} brand generally score in terms of quality perception among consumers?",
+    "Brand Loyalty": "To what extent do you trust {brand} to prioritize its social responsibility initiatives?",
+    "Trust and Credibility": "To what extent does the {brand} build trust and credibility with its target audience?"
 }

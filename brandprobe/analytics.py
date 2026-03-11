@@ -8,6 +8,16 @@ import warnings
 # Suppress warnings that might occur during embedding generation
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+_ST_MODEL = None
+
+def _get_st_model():
+    """Lazily initializes and returns the SentenceTransformer model."""
+    global _ST_MODEL
+    if _ST_MODEL is None:
+        _ST_MODEL = SentenceTransformer('all-MiniLM-L6-v2')
+    return _ST_MODEL
+
+
 def get_consistency_metrics(df: pd.DataFrame, group_cols: list[str]) -> pd.DataFrame:
     """
     Calculates the mean and standard deviation of Cosine Similarity for generated responses 
@@ -23,8 +33,8 @@ def get_consistency_metrics(df: pd.DataFrame, group_cols: list[str]) -> pd.DataF
     if 'Response' not in df.columns:
         raise ValueError("DataFrame must contain a 'Response' column.")
     
-    # Load the local model
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    # Load the cached model
+    model = _get_st_model()
     
     results = []
     

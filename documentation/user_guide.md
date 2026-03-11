@@ -36,31 +36,30 @@ If you want an LLM to calculate the final sentiment score instead of the default
 scoring_engine = OpenAIEngine(api_key="sk-...", model="gpt-4-turbo")
 ```
 
-### 1.3 The Prompter Engine (Optional)
-If you want to instruct an LLM to dynamically invent new Personas and Test Cases, you can instantiate a third engine (or reuse an existing one).
-
-```python
-# We'll just reuse the generation_engine for this guide
-prompter_engine = generation_engine 
-```
-
 ---
 
-## 2. Choosing How Sentiment is Calculated
+## 2. Choosing How Sentiment is Calculated (The Tier System)
 
-When configuring the Runner orchestration, you decide how sentiment is scored by whether or not you provide a `llm_scorer_engine`.
+BrandProbe categorizes sentiment calculation into three tiers, balancing speed, local privacy, and deep reasoning.
 
-**Option A: Deterministic NLP (TextBlob - Default)**
-If you do not pass a scoring engine, BrandProbe defaults to `TextBlob`. This is faster, cheaper, and strictly deterministic based on word polarity.
+**Tier 1: Deterministic NLP (TextBlob - Fastest & Default)**
+This tier is completely local, requires no heavy models, and computes almost instantly. It is deterministic, relying on word polarity. Use this for rapid prototyping.
 ```python
 from brandprobe import Runner
-runner = Runner(engine=generation_engine)
+runner = Runner(engine=generation_engine, sentiment_method="textblob")
 ```
 
-**Option B: LLM as a Judge**
-If you pass the scoring engine, BrandProbe asks the LLM to read the generated response and assign it a polarity score from `-1.0` (negative) to `1.0` (positive).
+**Tier 2: Local AI (RoBERTa - Recommended)**
+This tier uses a local HuggingFace Transformer (`cardiffnlp/twitter-roberta-base-sentiment-latest`). It offers high accuracy and nuance without sending data over an API. It caches the model automatically. Use this for production-grade local analysis.
+*(Requires `transformers` and `torch`)*
 ```python
-runner = Runner(engine=generation_engine, llm_scorer_engine=scoring_engine)
+runner = Runner(engine=generation_engine, sentiment_method="roberta")
+```
+
+**Tier 3: LLM as a Judge (Highest Nuance)**
+If you pass a scoring engine, BrandProbe asks the LLM to read the response and assign a polarity score from `-1.0` to `1.0`. This handles deep sarcasm and complex context but requires API calls.
+```python
+runner = Runner(engine=generation_engine, llm_scorer_engine=scoring_engine, sentiment_method="llm")
 ```
 
 ---
@@ -74,7 +73,7 @@ BrandProbe comes with default personas and test cases, but its real power is dyn
 from brandprobe import DynamicProberGenerator
 from brandprobe.probers import PERSONAS, TEST_CASES
 
-generator = DynamicProberGenerator(prompter_engine)
+generator = DynamicProberGenerator(generation_engine)
 
 # Tell the LLM to invent 3 personas representing 'European Teenagers'
 # Using temperature=0.9 for highly creative variation
@@ -168,6 +167,7 @@ plot_radar(
     target_names=['Apple', 'Google'],
     axis_col='Methodology',
     score='Sentiment',
+    target_variable='Target',
     save_path='radar_comparison.png' # Leave empty to display inline
 )
 
@@ -176,6 +176,7 @@ plot_semantic_map(
     df=df,
     target_filter='Apple',
     color_by='Persona',
+    target_variable='Target',
     save_path='umap_semantic.png'
 )
 

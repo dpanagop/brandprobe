@@ -87,10 +87,12 @@
         <h3>1.3 <code>scorers.py</code> (The Evaluation Layer)</h3>
         <p>This module processes the LLM's raw text response.</p>
         <ul>
-            <li><strong><code>SentimentWrapper</code></strong>: Contains an <code>analyze(text, engine=None)</code>
-                method. If no engine is provided, it defaults to a deterministic NLP approach using
-                <code>TextBlob</code>. If an engine is provided, it uses the LLM as a "judge" to extract a sentiment
-                score between -1.0 and 1.0.
+            <li><strong><code>SentimentWrapper</code></strong>: Contains an <code>analyze(text, engine=None, method="textblob")</code> method. It defines the Sentiment Tier System:
+                <ul>
+                    <li><strong>Tier 1 (<code>method="textblob"</code>)</strong>: Deterministic NLP approach using <code>TextBlob</code>. (Fastest, Local, Lexicon-based)</li>
+                    <li><strong>Tier 2 (<code>method="roberta"</code>)</strong>: Loads a local HuggingFace Pipeline <code>cardiffnlp/twitter-roberta-base-sentiment-latest</code> via transformers. It caches the model lazily. (Recommended for local high-accuracy)</li>
+                    <li><strong>Tier 3 (<code>method="llm"</code>)</strong>: Uses the LLM as a "judge" (requires passing an <code>engine</code>) to extract a sentiment score between -1.0 and 1.0. (Highest nuance, API-dependent)</li>
+                </ul>
             </li>
             <li><strong><code>ReliabilityLayer</code></strong>: Provides basic heuristics (like
                 <code>check_consistency</code>) to ensure the response isn't empty or malformed before scoring.
@@ -100,8 +102,7 @@
         <h3>1.4 <code>runner.py</code> (The Orchestrator)</h3>
         <p>The <code>Runner</code> orchestrates the execution of the 3D Cube.</p>
         <ul>
-            <li><strong><code>__init__(engine, llm_scorer_engine=None)</code></strong>: Takes the primary generation
-                engine and an optional secondary engine for scoring.</li>
+            <li><strong><code>__init__(engine, llm_scorer_engine=None, sentiment_method="textblob")</code></strong>: Takes the primary generation engine, an optional secondary engine for scoring, and the preferred sentiment tier.</li>
             <li><strong><code>run_cube(...)</code></strong>: Executes a nested loop across Targets, Methodologies, Test
                 Cases, and Personas. You can pass an optional <code>temperature</code> (default <code>0.7</code>) to
                 control generation determinism across the main audit run. For each combination:
@@ -133,12 +134,12 @@
         <h3>1.6 <code>visualizations.py</code> (The Charting Layer)</h3>
         <p>This module provides dynamic charting for presentation and qualitative review.</p>
         <ul>
-            <li><strong><code>plot_radar(df, target_names, axis_col, score='Sentiment', ...)</code></strong>: Generates
+            <li><strong><code>plot_radar(df, target_names, axis_col, score='Sentiment', target_variable='Target', ...)</code></strong>: Generates
                 a dynamic radar
                 chart using <code>matplotlib</code> polar projection, smoothly comparing selected Targets across dynamic
                 categorical axes (e.g., Personas or Methodologies). Optimized for sentiment ranges from -1 to 1
                 (visualized from -1.1 to 1.1).</li>
-            <li><strong><code>plot_semantic_map(df, target_filter, color_by, ...)</code></strong>: Generates a 2D map.
+            <li><strong><code>plot_semantic_map(df, target_filter, color_by, target_variable='Target', ...)</code></strong>: Generates a 2D map.
                 It generates local <code>all-MiniLM-L6-v2</code> embeddings, squashes them down to 2 dimensions using
                 <code>umap-learn</code>, and plots a scatter graph with <code>seaborn</code> colored by a desired
                 parameter.
@@ -150,29 +151,38 @@
     </div>
 
     <div class="section">
-        <h2>2. Understanding <code>verify_cube.py</code></h2>
-        <p>The <code>verify_cube.py</code> script serves as an integration test to ensure the mathematical Cartesian
-            product logic works without spending real API credits.</p>
-        <p><strong>How it works:</strong></p>
-        <ol>
+        <h2>2. Testing Scripts and Verification</h2>
+        <p>The repository contains several scripts designed to verify logical integrity, visualization outputs, and sentiment pipelines without spending real API credits or requiring live models.</p>
+
+        <h3>2.1 <code>verify_cube.py</code> (Integration Testing)</h3>
+        <p>Serves as an integration test to ensure the mathematical Cartesian product logic works.</p>
+        <ul>
             <li><strong>Mock Engines</strong>: It defines a <code>MockEngine</code> (for generation), a
                 <code>MockScorerEngine</code> (for scoring), and a <code>MockProberEngine</code> (for generating dynamic
-                personas/cases). These classes inherit from <code>BaseEngine</code> but return hardcoded strings instead
-                of making network calls.
+                personas/cases). These classes inherit from <code>BaseEngine</code> but return hardcoded strings.
             </li>
-            <li><strong>Dynamic Generation Test</strong>: It uses the <code>MockProberEngine</code> to "generate" 2 new
-                personas and 2 new test cases, demonstrating how to merge dynamic items into the static
+            <li><strong>Dynamic Generation Test</strong>: It uses the <code>MockProberEngine</code> to "generate" new items, demonstrating how to merge dynamic items into the static
                 <code>TEST_CASES</code> and <code>PERSONAS</code> dictionaries.
             </li>
-            <li><strong>Execution</strong>: It initializes the <code>Runner</code> with the mock engines and runs the
-                cube.</li>
-            <li><strong>Verification</strong>: It calculates the expected rows:
-                <code>Len(Targets) * Len(Methodologies) * Len(Test Cases) * Len(Personas)</code>. It asserts that the
-                resulting DataFrame length matches this exact number (ensuring no combinations were skipped).
+            <li><strong>Execution & Verification</strong>: Initializes the <code>Runner</code> with mock engines, runs the cube, and asserts the resulting DataFrame length matches the expected mathematical rows (<code>Len(Targets) * Len(Methodologies) * Len(Test Cases) * Len(Personas)</code>).
             </li>
-            <li><strong>Export</strong>: It saves the results to <code>cube_results.csv</code> to prove the DataFrame
-                structural integrity.</li>
-        </ol>
+            <li><strong>Export</strong>: Saves results to <code>cube_results.csv</code> to prove structural integrity.</li>
+        </ul>
+
+        <h3>2.2 <code>test_visuals.py</code> (Visualization &amp; Analytics Testing)</h3>
+        <p>Validates the local <code>SentenceTransformer</code> caching and charting functions.</p>
+        <ul>
+            <li><strong>Synthetic Data</strong>: Generates a dummy pandas DataFrame mirroring the output of a real <code>run_cube</code> execution.</li>
+            <li><strong>Analytics Check</strong>: Runs the synthetic DataFrame through <code>get_consistency_metrics</code> and <code>calculate_sentiment_skew</code> to verify local embedding performance and dimensional grouping calculations.</li>
+            <li><strong>Chart Generation</strong>: Generates sample UMAP representations, Radar Charts, and Skew Bar Plots, saving them locally to a <code>test_output</code> directory to ensure mathematical errors do not disrupt visual generation.</li>
+        </ul>
+
+        <h3>2.3 <code>test_roberta.py</code> (Sentiment Tier 2 Testing)</h3>
+        <p>A micro-script to validate the HuggingFace <code>transformers</code> integration.</p>
+        <ul>
+            <li>Passes explicit strings (Positive, Negative, Neutral) through the <code>SentimentWrapper</code>.</li>
+            <li>Verifies that the internal logic correctly maps the model-specific textual labels outputted by <code>cardiffnlp/twitter-roberta-base-sentiment-latest</code> into continuous mathematical floats between <code>-1.0</code> and <code>1.0</code>.</li>
+        </ul>
     </div>
 
     <div class="section">

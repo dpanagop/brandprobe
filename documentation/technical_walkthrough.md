@@ -18,12 +18,15 @@ This module manages the inputs sent to the LLM.
 
 ### 1.3 `scorers.py` (The Evaluation Layer)
 This module processes the LLM's raw text response.
-- **`SentimentWrapper`**: Contains an `analyze(text, engine=None)` method. If no engine is provided, it defaults to a deterministic NLP approach using `TextBlob`. If an engine is provided, it uses the LLM as a "judge" to extract a sentiment score between -1.0 and 1.0.
+- **`SentimentWrapper`**: Contains an `analyze(text, engine=None, method="textblob")` method. It defines the Sentiment Tier System:
+  - **Tier 1 (`method="textblob"`)**: Deterministic NLP approach using `TextBlob`. (Fastest, Local, Lexicon-based)
+  - **Tier 2 (`method="roberta"`)**: Loads a local HuggingFace Pipeline `cardiffnlp/twitter-roberta-base-sentiment-latest` via transformers. It caches the model lazily. (Recommended for local high-accuracy)
+  - **Tier 3 (`method="llm"`)**: Uses the LLM as a "judge" (requires passing an `engine`) to extract a sentiment score between -1.0 and 1.0. (Highest nuance, API-dependent)
 - **`ReliabilityLayer`**: Provides basic heuristics (like `check_consistency`) to ensure the response isn't empty or malformed before scoring.
 
 ### 1.4 `runner.py` (The Orchestrator)
 The `Runner` orchestrates the execution of the 3D Cube.
-- **`__init__(engine, llm_scorer_engine=None)`**: Takes the primary generation engine and an optional secondary engine for scoring.
+- **`__init__(engine, llm_scorer_engine=None, sentiment_method="textblob")`**: Takes the primary generation engine, an optional secondary engine for scoring, and the preferred sentiment tier.
 - **`run_cube(...)`**: Executes a nested loop across Targets, Methodologies, Test Cases, and Personas. You can pass an optional `temperature` (default `0.7`) to control generation determinism across the main audit run. For each combination:
   1. It formats the system and user prompts (`_apply_methodology`).
   2. Calls `self.engine.generate()` statelessly (no conversation history).
@@ -37,21 +40,32 @@ This module introduces automated semantic analysis using local embeddings.
 
 ### 1.6 `visualizations.py` (The Charting Layer)
 This module provides dynamic charting for presentation and qualitative review.
-- **`plot_radar(df, target_names, axis_col, score='Sentiment', ...)`**: Generates a dynamic radar chart using `matplotlib` polar projection, smoothly comparing selected Targets across dynamic categorical axes (e.g., Personas or Methodologies). Optimized for sentiment ranges from -1 to 1 (visualized from -1.1 to 1.1).
-- **`plot_semantic_map(df, target_filter, color_by, ...)`**: Generates a 2D map. It generates local `all-MiniLM-L6-v2` embeddings, squashes them down to 2 dimensions using `umap-learn`, and plots a scatter graph with `seaborn` colored by a desired parameter.
+- **`plot_radar(df, target_names, axis_col, score='Sentiment', target_variable='Target', ...)`**: Generates a dynamic radar chart using `matplotlib` polar projection, smoothly comparing selected Targets across dynamic categorical axes (e.g., Personas or Methodologies). Optimized for sentiment ranges from -1 to 1 (visualized from -1.1 to 1.1).
+- **`plot_semantic_map(df, target_filter, color_by, target_variable='Target', ...)`**: Generates a 2D map. It generates local `all-MiniLM-L6-v2` embeddings, squashes them down to 2 dimensions using `umap-learn`, and plots a scatter graph with `seaborn` colored by a desired parameter.
 - **`plot_skew_comparison(skew_df, x_col, hue_col, ...)`**: Generates a Bar Chart displaying the calculated Skewness for different groupings (e.g., comparing Targets side-by-side grouped by Persona) complete with analytical threshold lines at 0.5 and -0.5.
 
 
-## 2. Understanding `verify_cube.py`
+## 2. Testing Scripts and Verification
 
-The `verify_cube.py` script serves as an integration test to ensure the mathematical Cartesian product logic works without spending real API credits.
+The repository contains several scripts designed to verify logical integrity, visualization outputs, and sentiment pipelines without spending real API credits or requiring live models.
 
-**How it works:**
-1. **Mock Engines**: It defines a `MockEngine` (for generation), a `MockScorerEngine` (for scoring), and a `MockProberEngine` (for generating dynamic personas/cases). These classes inherit from `BaseEngine` but return hardcoded strings instead of making network calls.
-2. **Dynamic Generation Test**: It uses the `MockProberEngine` to "generate" 2 new personas and 2 new test cases, demonstrating how to merge dynamic items into the static `TEST_CASES` and `PERSONAS` dictionaries.
-3. **Execution**: It initializes the `Runner` with the mock engines and runs the cube.
-4. **Verification**: It calculates the expected rows: `Len(Targets) * Len(Methodologies) * Len(Test Cases) * Len(Personas)`. It asserts that the resulting DataFrame length matches this exact number (ensuring no combinations were skipped).
-5. **Export**: It saves the results to `cube_results.csv` to prove the DataFrame structural integrity.
+### 2.1 `verify_cube.py` (Integration Testing)
+Serves as an integration test to ensure the mathematical Cartesian product logic works.
+- **Mock Engines**: It defines a `MockEngine` (for generation), a `MockScorerEngine` (for scoring), and a `MockProberEngine` (for generating dynamic personas/cases). These inherit from `BaseEngine` but return hardcoded strings.
+- **Dynamic Generation Test**: Uses the `MockProberEngine` to "generate" new items, demonstrating merging into the static `TEST_CASES` and `PERSONAS`.
+- **Execution & Verification**: Initializes the `Runner` with mock engines, runs the cube, and asserts the resulting DataFrame length matches the expected mathematical rows (`Len(Targets) * Len(Methodologies) * Len(Test Cases) * Len(Personas)`).
+- **Export**: Saves results to `cube_results.csv` to prove structural integrity.
+
+### 2.2 `test_visuals.py` (Visualization & Analytics Testing)
+Validates the local `SentenceTransformer` caching and charting functions.
+- **Synthetic Data**: Generates a dummy pandas DataFrame mirroring the output of a real `run_cube` execution (with mock targets, personas, and sentiment scores).
+- **Analytics Check**: Runs the synthetic DataFrame through `get_consistency_metrics` and `calculate_sentiment_skew` to verify local embedding performance and dimensional grouping calculations.
+- **Chart Generation**: Generates sample UMAP representations, Radar Charts, and Skew Bar Plots, saving them locally to a `test_output` directory to ensure mathematical errors (like NaN or division by zero handling) do not disrupt visual generation.
+
+### 2.3 `test_roberta.py` (Sentiment Tier 2 Testing)
+A micro-script to validate the HuggingFace `transformers` integration.
+- Passes explicit strings (Positive, Negative, Neutral) through the `SentimentWrapper`.
+- Verifies that the internal logic correctly maps the model-specific textual labels outputted by `cardiffnlp/twitter-roberta-base-sentiment-latest` into continuous mathematical floats between `-1.0` and `1.0`.
 
 ## 3. Extending BrandProbe: Adding New LLM Connections
 
