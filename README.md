@@ -85,7 +85,7 @@ print(df.head())
 
 ## 👤 Author
 
-**Dimitrios Panagopoulos** Data Science Leader. Bridging PhD-Level Analytics & Executive Strategy..
+**Dimitrios Panagopoulos** Data Science Leader. Bridging PhD-Level Analytics & Executive Strategy.
 
 - **Personal Webpage:** [dpanagopoulos.com](https://dpanagopoulos.com/)
 - **LinkedIn:** [dpanagopoulos](https://www.linkedin.com/in/dpanagopoulos/)
