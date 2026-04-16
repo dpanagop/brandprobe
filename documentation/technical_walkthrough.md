@@ -9,7 +9,7 @@ The framework is built around decoupled components located in the `brandprobe/` 
 ### 1.1 `engines.py` (The Communication Layer)
 This module defines how BrandProbe communicates with AI models.
 - **`BaseEngine`**: An abstract base class requiring a `generate(system_prompt, user_prompt, max_tokens, temperature)` method. This enforces a standard interface.
-- **`AzureOpenAIEngine` / `OpenAIEngine`**: Concrete implementations that wrap specific SDKs (e.g., the official `openai` Python package). They handle authentication, endpoint routing, and parsing the API responses back into standard strings.
+- **`AzureOpenAIEngine` / `OpenAIEngine`**: Concrete implementations that wrap specific SDKs (e.g., the official `openai` Python package). They handle authentication (such as Entra ID or API keys for Azure), endpoint routing, and parsing the API responses back into standard strings.
 
 ### 1.2 `probers.py` (The Templating & Generation Layer)
 This module manages the inputs sent to the LLM.

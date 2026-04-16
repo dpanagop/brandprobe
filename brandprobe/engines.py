@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 from openai import OpenAI, AzureOpenAI
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 class BaseEngine(ABC):
     @abstractmethod
@@ -9,13 +10,36 @@ class BaseEngine(ABC):
         pass
 
 class AzureOpenAIEngine(BaseEngine):
-    def __init__(self, api_key: str, api_version: str, azure_endpoint: str, deployment_name: str):
-        self.client = AzureOpenAI(
-            api_key=api_key,
-            api_version=api_version,
-            azure_endpoint=azure_endpoint
-        )
+    def __init__(
+        self,
+        api_version: str,
+        azure_endpoint: str,
+        deployment_name: str,
+        auth_mode: str = "entra",
+        api_key: Optional[str] = None,
+    ):
         self.deployment_name = deployment_name
+
+        if auth_mode == "entra":
+            token_provider = get_bearer_token_provider(
+                DefaultAzureCredential(),
+                "https://cognitiveservices.azure.com/.default",
+            )
+            self.client = AzureOpenAI(
+                api_version=api_version,
+                azure_endpoint=azure_endpoint,
+                azure_ad_token_provider=token_provider,
+            )
+        elif auth_mode == "api_key":
+            if not api_key:
+                raise ValueError("api_key is required when auth_mode='api_key'")
+            self.client = AzureOpenAI(
+                api_key=api_key,
+                api_version=api_version,
+                azure_endpoint=azure_endpoint,
+            )
+        else:
+            raise ValueError("auth_mode must be 'entra' or 'api_key'")
 
     def generate(self, system_prompt: str, user_prompt: str, max_tokens: int = 250, temperature: float = 0.7) -> str:
         response = self.client.chat.completions.create(
