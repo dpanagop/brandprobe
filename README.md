@@ -29,7 +29,7 @@ uv run python -m ipykernel install --user --name=brandprobe --display-name "Pyth
 The package is divided into several clear, modular components under `brandprobe/`:
 - **`engines.py`**: Contains `BaseEngine` and wrappers for Azure OpenAI and standardized OpenAI (Ollama-compatible) models.
 - **`probers.py`**: A library of f-string templates containing the predefined `PERSONAS` and `TEST_CASES`.
-- **`scorers.py`**: Evaluation logic containing `SentimentWrapper` (TextBlob polarity) and `ReliabilityLayer` (Consistency/Hallucination checks).
+- **`scorers.py`**: Evaluation logic containing `SentimentWrapper` (TextBlob, RoBERTA, LLM-based polarity) and `ReliabilityLayer` (Consistency/Hallucination checks).
 - **`runner.py`**: The main orchestrator that runs the stateless 3D Cube evaluation and returns a structured pandas DataFrame.
 
 ## 💻 Usage
@@ -85,9 +85,9 @@ print(df.head())
 
 ## 👤 Author
 
-**Dimitrios Panagopoulos** Specialist in AI Sentiment Research & Prompt Engineering.
+**Dimitrios Panagopoulos** Data Science Leader. Bridging PhD-Level Analytics & Executive Strategy.
 
-- **Personal Webpage:** [dpanagop.github.io](https://dpanagop.github.io/)
+- **Personal Webpage:** [dpanagopoulos.com](https://dpanagopoulos.com/)
 - **LinkedIn:** [dpanagopoulos](https://www.linkedin.com/in/dpanagopoulos/)
 
 ---
