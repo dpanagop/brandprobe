@@ -78,12 +78,24 @@ generation_engine = OpenAIEngine(api_key="sk-...", model="gpt-4o")
 # Assume Ollama is running locally on port 11434
 generation_engine = OpenAIEngine(api_key="ollama", base_url="http://localhost:11434/v1", model="llama3")
 
-# Example 3: Azure OpenAI (Entra ID Auth default, can also pass auth_mode="api_key" and an api_key)
-azure_engine = AzureOpenAIEngine(
+# Example 3a: Azure OpenAI using Microsoft Entra ID (Recommended & Default)
+# Uses DefaultAzureCredential to obtain bearer tokens securely. 
+# Ensure you are logged in (e.g., via `az login` or Managed Identity in Azure).
+azure_engine_entra = AzureOpenAIEngine(
     api_version="2024-02-15-preview", 
     azure_endpoint="https://your-resource.openai.azure.com/", 
     deployment_name="gpt-4-deployment",
-    auth_mode="entra"
+    auth_mode="entra" # Default
+)
+
+# Example 3b: Azure OpenAI using an API Key
+# Uses the traditional static API key.
+azure_engine_key = AzureOpenAIEngine(
+    api_version="2024-02-15-preview", 
+    azure_endpoint="https://your-resource.openai.azure.com/", 
+    deployment_name="gpt-4-deployment",
+    auth_mode="api_key",
+    api_key="your-azure-api-key"
 )</code></pre>
 
         <h3>1.2 The Scoring / Judging Engine (Optional)</h3>

@@ -64,9 +64,13 @@
                 <code>generate(system_prompt, user_prompt, max_tokens, temperature)</code> method. This enforces a
                 standard interface.
             </li>
-            <li><strong><code>AzureOpenAIEngine</code> / <code>OpenAIEngine</code></strong>: Concrete implementations
-                that wrap specific SDKs (e.g., the official <code>openai</code> Python package). They handle
-                authentication (such as Entra ID or API keys for Azure), endpoint routing, and parsing the API responses back into standard strings.</li>
+            <li><strong><code>AzureOpenAIEngine</code></strong>: A concrete implementation for Azure OpenAI. It supports two authentication modes via the <code>auth_mode</code> parameter:
+                <ul>
+                    <li><strong>Microsoft Entra ID (<code>auth_mode="entra"</code>, default)</strong>: Authenticates securely using <code>DefaultAzureCredential</code> from <code>azure.identity</code> combined with a bearer token provider targeting <code>"https://cognitiveservices.azure.com/.default"</code>.</li>
+                    <li><strong>API Key (<code>auth_mode="api_key"</code>)</strong>: Authenticates using a static API key passed to the <code>api_key</code> parameter. Raises a <code>ValueError</code> if no key is provided.</li>
+                </ul>
+            </li>
+            <li><strong><code>OpenAIEngine</code></strong>: A concrete implementation wrapping standard OpenAI endpoints (and Ollama-compatible local models).</li>
         </ul>
 
         <h3>1.2 <code>probers.py</code> (The Templating & Generation Layer)</h3>

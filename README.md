@@ -45,25 +45,40 @@ Once verified, you can replace `MockEngine` with `AzureOpenAIEngine` or `OpenAIE
 
 ### Using `AzureOpenAIEngine`
 
-To audit a model hosted on Azure OpenAI, you must provide your Azure endpoint details. Here is an example of running a shortened 3D Cube using `AzureOpenAIEngine`:
+To audit a model hosted on Azure OpenAI, you must provide your Azure endpoint details. `AzureOpenAIEngine` supports two authentication modes:
+
+1. **Microsoft Entra ID Authentication (Recommended / Default)**: Uses `DefaultAzureCredential` to obtain bearer tokens securely. Ensure your environment is authenticated (e.g., via `az login`, environment variables, or a Managed Identity).
+2. **API Key Authentication**: Uses the traditional static API key.
+
+Here is an example of running a shortened 3D Cube using `AzureOpenAIEngine`:
 
 ```python
 import os
 from brandprobe import Runner, AzureOpenAIEngine
 
-# Using environment variables is recommended for API keys
-api_key = os.getenv("AZURE_OPENAI_API_KEY", "your-azure-api-key")
+# Common configurations
 endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "https://your-resource.openai.azure.com/")
 deployment_name = "gpt-4-deployment" # the name of your specific deployment
 api_version = "2024-02-15-preview" # standard Azure OpenAI api-version
 
-# Initialize engine
+# --- Option 1: Microsoft Entra ID Authentication (Default) ---
+# Initialize engine (auth_mode defaults to "entra")
 engine = AzureOpenAIEngine(
-    api_key=api_key,
     api_version=api_version,
     azure_endpoint=endpoint,
-    deployment_name=deployment_name
+    deployment_name=deployment_name,
+    auth_mode="entra"
 )
+
+# --- Option 2: API Key Authentication ---
+# api_key = os.getenv("AZURE_OPENAI_API_KEY", "your-azure-api-key")
+# engine = AzureOpenAIEngine(
+#     api_version=api_version,
+#     azure_endpoint=endpoint,
+#     deployment_name=deployment_name,
+#     auth_mode="api_key",
+#     api_key=api_key
+# )
 
 # Set up orchestrator
 runner = Runner(engine)

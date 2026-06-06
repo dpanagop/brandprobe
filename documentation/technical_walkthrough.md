@@ -9,7 +9,10 @@ The framework is built around decoupled components located in the `brandprobe/` 
 ### 1.1 `engines.py` (The Communication Layer)
 This module defines how BrandProbe communicates with AI models.
 - **`BaseEngine`**: An abstract base class requiring a `generate(system_prompt, user_prompt, max_tokens, temperature)` method. This enforces a standard interface.
-- **`AzureOpenAIEngine` / `OpenAIEngine`**: Concrete implementations that wrap specific SDKs (e.g., the official `openai` Python package). They handle authentication (such as Entra ID or API keys for Azure), endpoint routing, and parsing the API responses back into standard strings.
+- **`AzureOpenAIEngine`**: A concrete implementation for Azure OpenAI. It supports two authentication modes via the `auth_mode` parameter:
+  - **Microsoft Entra ID (`auth_mode="entra"`, default)**: Authenticates securely using `DefaultAzureCredential` from `azure.identity` combined with a bearer token provider targeting `"https://cognitiveservices.azure.com/.default"`.
+  - **API Key (`auth_mode="api_key"`)**: Authenticates using a static API key passed to the `api_key` parameter. Raises a `ValueError` if no key is provided.
+- **`OpenAIEngine`**: A concrete implementation wrapping standard OpenAI endpoints (and Ollama-compatible local models).
 
 ### 1.2 `probers.py` (The Templating & Generation Layer)
 This module manages the inputs sent to the LLM.

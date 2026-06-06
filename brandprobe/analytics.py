@@ -83,7 +83,7 @@ def _interpret_skew(skew_val: float) -> str:
     else:
         return "Relatively Symmetrical"
 
-def calculate_sentiment_skew(df: pd.DataFrame, target_col: str = 'Score', group_cols: list[str] | None = None) -> pd.DataFrame:
+def calculate_sentiment_skew(df: pd.DataFrame, target_col: str = 'Sentiment', group_cols: list[str] | None = None) -> pd.DataFrame:
     """
     Calculates the Fisher-Pearson skewness of sentiment scores to identify
     if the model has a "Pollyanna" (overly positive) or negative bias.
@@ -93,7 +93,7 @@ def calculate_sentiment_skew(df: pd.DataFrame, target_col: str = 'Score', group_
     
     Args:
         df: The DataFrame containing audit results.
-        target_col: The numerical column to calculate skewness on (default 'Score').
+        target_col: The numerical column to calculate skewness on (default 'Sentiment').
         group_cols: Optional list of columns to slice the skewness by (e.g. ['Target', 'Persona']).
 
     Returns:
